@@ -13,11 +13,11 @@ package core {
     - scale_weights
     + __init__(multiscale_config)
     + analyze_multiscale(code_data)
-    + _combine_scales(scale_results, scale_features)
-    + _weighted_average_combination(scale_results, scale_features)
-    + _max_pooling_combination(scale_results, scale_features)
-    + _attention_combination(scale_results, scale_features)
-    + _simple_average_combination(scale_results, scale_features)
+    # _combine_scales(scale_results, scale_features)
+    # _weighted_average_combination(scale_results, scale_features)
+    # _max_pooling_combination(scale_results, scale_features)
+    # _attention_combination(scale_results, scale_features)
+    # _simple_average_combination(scale_results, scale_features)
   }
   class FunctionLevelAnalyzer
   class FileLevelAnalyzer

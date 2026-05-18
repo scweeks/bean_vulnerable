@@ -4,11 +4,11 @@ skinparam classAttributeIconSize 0
 package core {
   class FunctionLevelAnalyzer {
     + analyze(function_code)
-    - _calculate_cyclomatic_complexity(code)
-    - _calculate_nesting_depth(code)
-    - _count_sql_patterns(code)
-    - _count_input_patterns(code)
-    - _count_output_patterns(code)
+    # _calculate_cyclomatic_complexity(code)
+    # _calculate_nesting_depth(code)
+    # _count_sql_patterns(code)
+    # _count_input_patterns(code)
+    # _count_output_patterns(code)
   }
 }
 note right of FunctionLevelAnalyzer

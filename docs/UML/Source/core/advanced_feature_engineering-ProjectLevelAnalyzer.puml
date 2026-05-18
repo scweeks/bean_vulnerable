@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 package core {
   class ProjectLevelAnalyzer {
     + analyze(project_context)
-    - _count_security_dependencies(dependencies)
+    # _count_security_dependencies(dependencies)
   }
 }
 note right of ProjectLevelAnalyzer

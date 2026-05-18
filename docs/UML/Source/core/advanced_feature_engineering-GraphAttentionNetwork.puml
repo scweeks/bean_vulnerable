@@ -14,8 +14,8 @@ package core {
     - dropout_layer
     + __init__(input_dim, hidden_dim, num_heads, num_layers, dropout)
     + forward(x, edge_index, batch)
-    + _forward_pyg(x, edge_index, batch)
-    + _forward_simplified(x, edge_index, batch)
+    # _forward_pyg(x, edge_index, batch)
+    # _forward_simplified(x, edge_index, batch)
   }
 }
 note right of GraphAttentionNetwork

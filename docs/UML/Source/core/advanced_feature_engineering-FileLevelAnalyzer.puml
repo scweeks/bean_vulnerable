@@ -4,7 +4,7 @@ skinparam classAttributeIconSize 0
 package core {
   class FileLevelAnalyzer {
     + analyze(file_code)
-    - _count_security_imports(code)
+    # _count_security_imports(code)
   }
 }
 note right of FileLevelAnalyzer
