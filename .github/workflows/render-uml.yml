@@ -60,10 +60,23 @@ jobs:
           #!/usr/bin/env bash
           set -euo pipefail
 
-          # ── Type detection ───────────────────────────────────────────────────────────
-          # Reads the first 200 lines of the .puml file and detects the diagram type
-          # from content keywords. Returns one of the canonical type folder names.
-          detect_type() {
+          UML_TYPES=(Activity Class Component Deployment Gantt MindMap Object Other Package Sequence State Timing UseCase)
+
+          detect_type_from_path() {
+            local rel="$1"   # e.g. core/advanced_feature_engineering/Class/foo.puml
+            IFS='/' read -r -a PARTS <<< "$rel"
+            for part in "${PARTS[@]}"; do
+              for t in "${UML_TYPES[@]}"; do
+                if [[ "${part,,}" == "${t,,}" ]]; then
+                  echo "$t"
+                  return
+                fi
+              done
+            done
+            echo ""
+          }
+
+          detect_type_from_content() {
             local puml="$1"
             local CONTENT
             CONTENT=$(sed -n '1,200p' "$puml" | tr '[:upper:]' '[:lower:]')
@@ -73,7 +86,7 @@ jobs:
             elif grep -Eq '\b(participant|activate|deactivate)\b|->|<-|-->|<--' <<< "$CONTENT"; then echo "Sequence"
             elif grep -Eq '\b(start|stop|partition|fork|merge|repeat|while|endif|endwhile)\b' <<< "$CONTENT"; then echo "Activity"
             elif grep -Eq '\b(class|interface|abstract|enum)\b' <<< "$CONTENT"; then echo "Class"
-            elif grep -Eq '\b(actor|usecase)\b|\(.*\)' <<< "$CONTENT"; then echo "UseCase"
+            elif grep -Eq '\b(actor|usecase)\b' <<< "$CONTENT"; then echo "UseCase"
             elif grep -Eq '\b(state)\b|\[\*\]' <<< "$CONTENT"; then echo "State"
             elif grep -Eq '\b(component|node|cloud|database|artifact)\b' <<< "$CONTENT"; then echo "Component"
             elif grep -Eq '\bobject\b' <<< "$CONTENT"; then echo "Object"
@@ -82,53 +95,66 @@ jobs:
             fi
           }
 
-          # ── Output directory ─────────────────────────────────────────────────────────
-          # Maps: docs/UML/Source/<subdir>/<file>.puml
-          #    → docs/UML/<Type>/<subdir>/
-          #
-          # Rule: strip the Source prefix, keep the subdirectory path exactly as-is,
-          # place under the detected type folder. Never append the filename as a folder.
           compute_outdir() {
             local puml="$1"
-            local type="$2"
+            local rel="${puml#docs/UML/Source/}"  # e.g. core/advanced_feature_engineering/Class/foo.puml
 
-            # Strip the leading source path to get the relative subdirectory
-            local rel="${puml#docs/UML/Source/}"   # e.g. core/foo.puml
-            local subdir
-            subdir=$(dirname "$rel")               # e.g. core  (or "." if at root)
+            # 1. Try to find a type folder in the path
+            local path_type
+            path_type=$(detect_type_from_path "$rel")
 
-            if [[ "$subdir" == "." ]]; then
-              echo "docs/UML/$type"
+            local TYPE
+            if [[ -n "$path_type" ]]; then
+              TYPE="$path_type"
+              # Strip the type segment from the path to avoid duplication
+              # e.g. core/advanced_feature_engineering/Class/foo.puml
+              #   -> core/advanced_feature_engineering
+              local stripped
+              stripped=$(echo "$rel" | sed "s|/${path_type}/.*||I; s|/${path_type}$||I")
+              local subdir
+              subdir=$(dirname "$stripped")
+              local module
+              module=$(basename "$stripped")
+
+              if [[ "$subdir" == "." ]]; then
+                echo "docs/UML/$TYPE/$module"
+              else
+                echo "docs/UML/$TYPE/$subdir/$module"
+              fi
             else
-              echo "docs/UML/$type/$subdir"
+              # 2. Fall back to content detection
+              TYPE=$(detect_type_from_content "$puml")
+              local subdir
+              subdir=$(dirname "$rel")
+              if [[ "$subdir" == "." ]]; then
+                echo "docs/UML/$TYPE"
+              else
+                echo "docs/UML/$TYPE/$subdir"
+              fi
             fi
           }
 
-          # ── Process a single file ────────────────────────────────────────────────────
           process_file() {
             local puml="$1"
-            local mode="$2"   # "dry" or "render"
+            local mode="$2"
 
             if ! grep -qi '@startuml' "$puml"; then
               echo "SKIP (no @startuml): $puml"
               return
             fi
 
-            local TYPE OUT_DIR TEMP_DIR
-            TYPE=$(detect_type "$puml")
-            OUT_DIR=$(compute_outdir "$puml" "$TYPE")
+            local OUT_DIR TEMP_DIR
+            OUT_DIR=$(compute_outdir "$puml")
 
             if [[ "$mode" == "dry" ]]; then
-              echo "Source: $puml  ->  $OUT_DIR  [type: $TYPE]"
+              echo "Source: $puml  ->  $OUT_DIR"
               return
             fi
 
-            # Render mode: use a temp dir then move SVGs to avoid PlantUML
-            # resolving -o relative to the source file location.
             mkdir -p "$OUT_DIR"
             TEMP_DIR=$(mktemp -d)
 
-            echo "Rendering: $puml  ->  $OUT_DIR  [type: $TYPE]"
+            echo "Rendering: $puml  ->  $OUT_DIR"
             java -jar .plantuml/plantuml.jar -tsvg "$puml" -o "$TEMP_DIR"
 
             if compgen -G "$TEMP_DIR/*.svg" > /dev/null; then
@@ -141,7 +167,6 @@ jobs:
             rm -rf "$TEMP_DIR"
           }
 
-          # ── Entry point ──────────────────────────────────────────────────────────────
           process_file "$1" "$2"
           SCRIPT
           chmod +x map_and_render.sh
