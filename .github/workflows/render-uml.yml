@@ -15,6 +15,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Java
         uses: actions/setup-java@v4
@@ -34,6 +36,7 @@ jobs:
 
       - name: Generate SVGs with auto-routing
         run: |
+          ERRORS=0
           find docs/UML/Source -name "*.puml" | while read puml; do
 
             # Determine diagram type from file content
@@ -71,10 +74,16 @@ jobs:
             OUT_DIR="docs/UML/$TYPE/$SUB_DIR"
 
             mkdir -p "$OUT_DIR"
-
             echo "Processing: $puml -> $OUT_DIR [$TYPE]"
-            java -jar plantuml.jar -tsvg "$puml" -o "$(pwd)/$OUT_DIR"
+            if ! java -jar plantuml.jar -tsvg "$puml" -o "$(pwd)/$OUT_DIR"; then
+              echo "ERROR: Failed to process $puml"
+              ERRORS=$((ERRORS + 1))
+            fi
           done
+          
+          if [ "$ERRORS" -gt 0 ]; then
+            echo "WARNING: $ERRORS file(s) failed to generate"
+          fi
 
       - name: Debug - list generated files
         run: |
