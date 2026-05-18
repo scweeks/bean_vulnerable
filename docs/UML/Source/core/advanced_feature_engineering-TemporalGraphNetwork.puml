@@ -1,6 +1,7 @@
 @startuml TemporalGraphNetwork
 title TemporalGraphNetwork (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
+top to bottom direction
 
 package torch {
   package nn {

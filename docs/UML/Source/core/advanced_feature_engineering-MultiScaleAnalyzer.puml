@@ -1,6 +1,8 @@
 @startuml MultiScaleAnalyzer
 title MultiScaleAnalyzer (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
+top to bottom direction
+
 package core {
   class MultiScaleAnalyzer {
     - config

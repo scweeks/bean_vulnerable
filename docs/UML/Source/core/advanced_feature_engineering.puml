@@ -1,6 +1,7 @@
 @startuml advanced_feature_engineering
 title advanced_feature_engineering (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
+top to bottom direction
 
 package torch {
   package nn {

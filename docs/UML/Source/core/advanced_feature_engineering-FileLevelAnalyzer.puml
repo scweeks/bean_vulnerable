@@ -1,6 +1,8 @@
 @startuml FileLevelAnalyzer
 title FileLevelAnalyzer (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
+top to bottom direction
+
 package core {
   class FileLevelAnalyzer {
     + analyze(file_code)
