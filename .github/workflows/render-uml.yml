@@ -171,6 +171,16 @@ jobs:
           SCRIPT
           chmod +x map_and_render.sh
 
+      - name: Clean previously generated SVGs
+        run: |
+          echo "=== Removing previously generated SVGs ==="
+          # Remove all SVG files under UML output folders (not Source)
+          find docs/UML -name "*.svg" -not -path "*/Source/*" -delete
+          # Remove any empty directories left behind
+          find docs/UML -type d -empty -not -path "*/Source/*" -delete
+          echo "=== Cleanup complete ==="
+          git status
+
       - name: Dry-run mapping
         run: |
           echo "=== Planned output mapping ==="
@@ -196,5 +206,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add docs/UML || true
+          git add -u docs/UML || true   # stages deletions of tracked files
           git diff --staged --quiet || git commit -m "ci: auto-generate UML diagrams [skip ci]"
           git push
