@@ -2,10 +2,9 @@ name: Generate PlantUML Diagrams
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'docs/UML/Source/**/*.puml'
-  workflow_dispatch:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
 
 jobs:
   generate-diagrams:
@@ -27,29 +26,45 @@ jobs:
       - name: Cache Graphviz binaries
         uses: actions/cache@v4
         with:
-          path: .graphviz-bin
+          path: |
+            .graphviz-bin
+            .graphviz-lib
+            .graphviz-plugins
           key: graphviz-2.42-${{ runner.os }}
           restore-keys: |
             graphviz-2.42-
 
       - name: Install or restore Graphviz
         run: |
-          if [ -d .graphviz-bin ]; then
+          if [ -d .graphviz-bin ] && [ -d .graphviz-lib ] && [ -d .graphviz-plugins ]; then
             echo "Restoring Graphviz from cache"
+
             sudo cp .graphviz-bin/* /usr/bin/
+            sudo cp .graphviz-lib/* /usr/lib/x86_64-linux-gnu/
+            sudo cp -r .graphviz-plugins/* /usr/lib/graphviz/
+
           else
             echo "Installing Graphviz via apt"
             sudo apt-get update
             sudo apt-get install -y graphviz
 
-            echo "Caching Graphviz binaries"
-            mkdir -p .graphviz-bin
+            echo "Caching Graphviz binaries and libraries"
+            mkdir -p .graphviz-bin .graphviz-lib .graphviz-plugins
+
             sudo cp /usr/bin/dot* .graphviz-bin/ || true
             sudo cp /usr/bin/neato* .graphviz-bin/ || true
             sudo cp /usr/bin/twopi* .graphviz-bin/ || true
             sudo cp /usr/bin/circo* .graphviz-bin/ || true
             sudo cp /usr/bin/fdp* .graphviz-bin/ || true
             sudo cp /usr/bin/sfdp* .graphviz-bin/ || true
+
+            sudo cp /usr/lib/x86_64-linux-gnu/libgvc.so* .graphviz-lib/ || true
+            sudo cp /usr/lib/x86_64-linux-gnu/libcgraph.so* .graphviz-lib/ || true
+            sudo cp /usr/lib/x86_64-linux-gnu/libpathplan.so* .graphviz-lib/ || true
+            sudo cp /usr/lib/x86_64-linux-gnu/libxdot.so* .graphviz-lib/ || true
+            sudo cp /usr/lib/x86_64-linux-gnu/libgvplugin_* .graphviz-lib/ || true
+
+            sudo cp -r /usr/lib/graphviz/* .graphviz-plugins/ || true
           fi
 
           dot -V
