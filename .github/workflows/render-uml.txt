@@ -24,8 +24,35 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Graphviz
-        run: sudo apt-get install -y graphviz
+      - name: Cache Graphviz binaries
+        uses: actions/cache@v4
+        with:
+          path: .graphviz-bin
+          key: graphviz-2.42-${{ runner.os }}
+          restore-keys: |
+            graphviz-2.42-
+
+      - name: Install or restore Graphviz
+        run: |
+          if [ -d .graphviz-bin ]; then
+            echo "Restoring Graphviz from cache"
+            sudo cp .graphviz-bin/* /usr/bin/
+          else
+            echo "Installing Graphviz via apt"
+            sudo apt-get update
+            sudo apt-get install -y graphviz
+
+            echo "Caching Graphviz binaries"
+            mkdir -p .graphviz-bin
+            sudo cp /usr/bin/dot* .graphviz-bin/ || true
+            sudo cp /usr/bin/neato* .graphviz-bin/ || true
+            sudo cp /usr/bin/twopi* .graphviz-bin/ || true
+            sudo cp /usr/bin/circo* .graphviz-bin/ || true
+            sudo cp /usr/bin/fdp* .graphviz-bin/ || true
+            sudo cp /usr/bin/sfdp* .graphviz-bin/ || true
+          fi
+
+          dot -V
 
       - name: Cache PlantUML JAR
         uses: actions/cache@v4
