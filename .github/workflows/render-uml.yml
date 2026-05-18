@@ -161,11 +161,6 @@ jobs:
 
           chmod +x map_and_render.sh
 
-      - name: Clean old UML outputs
-        run: |
-          echo "Cleaning old UML diagrams..."
-          find docs/UML -type f -name "*.svg" -delete || true
-          
       - name: Dry-run mapping
         run: |
           find docs/UML/Source -name "*.puml" | while read -r puml; do
