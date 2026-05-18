@@ -205,23 +205,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          echo "=== gitignore check ==="
-          git check-ignore -v docs/UML/Activity/core/bean_vuln_cli_backup/analyze_directory.svg || echo "NOT ignored"
-          cat .gitignore | grep -A5 "backup"
           
-          echo "=== Checking gitignore for bean_vuln_cli_backup ==="
-          git check-ignore -v docs/UML/Activity/core/bean_vuln_cli_backup/analyze_directory.svg || echo "NOT ignored"
-          git check-ignore -v docs/UML/Class/core/bean_vuln_cli_backup/FixedVul4JParser.svg || echo "NOT ignored"
-
-          echo "=== All SVGs on disk ==="
-          find docs/UML -name "*.svg" | sort
-
-          echo "=== Git status before staging ==="
-          git status
-
+          # Stage deletions of any previously tracked SVGs that were cleaned up
           git add -u docs/UML
-          git add docs/UML
+
+          # Force-add all SVGs under docs/UML, bypassing .gitignore entirely
+          find docs/UML -name "*.svg" -not -path "*/Source/*" | while IFS= read -r svg; do
+            git add -f "$svg"
+          done
 
           echo "=== Staged changes ==="
           git diff --staged --name-status
