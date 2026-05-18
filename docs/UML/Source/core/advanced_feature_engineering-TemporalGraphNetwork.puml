@@ -2,7 +2,7 @@
 title TemporalGraphNetwork (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
 package core {
-  class TemporalGraphNetwork <<torch.nn.Module>> {
+  class TemporalGraphNetwork --|> torch.nn.Module {
     - node_dim
     - edge_dim
     - hidden_dim

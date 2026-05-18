@@ -3,7 +3,7 @@ title advanced_feature_engineering (from src/core/advanced_feature_engineering.p
 skinparam classAttributeIconSize 0
 
 package core {
-  class GraphAttentionNetwork <<torch.nn.Module>> {
+  class GraphAttentionNetwork --|> torch.nn.Module {
     - input_dim
     - hidden_dim
     - num_heads
@@ -19,7 +19,7 @@ package core {
     # _forward_simplified(x, edge_index, batch)
   }
 
-  class TemporalGraphNetwork <<torch.nn.Module>> {
+  class TemporalGraphNetwork --|> torch.nn.Module {
     - node_dim
     - edge_dim
     - hidden_dim
