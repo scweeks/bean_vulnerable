@@ -90,6 +90,18 @@ temp*/
 cpg_slice.json
 evidence_spans.json
 
+# Allow generated UML diagrams
+!docs/UML/Class/**/*.svg
+!docs/UML/Sequence/**/*.svg
+!docs/UML/UseCase/**/*.svg
+!docs/UML/State/**/*.svg
+!docs/UML/Component/**/*.svg
+!docs/UML/Object/**/*.svg
+!docs/UML/Timing/**/*.svg
+!docs/UML/Gantt/**/*.svg
+!docs/UML/MindMap/**/*.svg
+!docs/UML/Other/**/*.svg
+
 # Allow documentation screenshots
 !examples/*.png
 !examples/*.jpg
