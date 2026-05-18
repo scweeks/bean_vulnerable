@@ -41,7 +41,7 @@ jobs:
 
             sudo cp .graphviz-bin/* /usr/bin/
             sudo cp .graphviz-lib/* /usr/lib/x86_64-linux-gnu/
-            sudo cp -r .graphviz-plugins/* /usr/lib/graphviz/
+            sudo cp -r /usr/lib/x86_64-linux-gnu/graphviz/* .graphviz-plugins/ || true
 
           else
             echo "Installing Graphviz via apt"
