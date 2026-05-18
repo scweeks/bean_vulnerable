@@ -94,9 +94,7 @@ jobs:
           git status
 
           echo "=== Adding all UML output ==="
-          git add docs/UML/Class docs/UML/Sequence docs/UML/UseCase \
-                  docs/UML/State docs/UML/Component docs/UML/Object \
-                  docs/UML/Timing docs/UML/Gantt docs/UML/MindMap docs/UML/Other 2>/dev/null || true
+          git add docs/UML || true
 
           echo "=== Git status after add ==="
           git status
