@@ -152,7 +152,7 @@ jobs:
             else
               mkdir -p "$OUT_DIR"
               echo "Rendering: $puml -> $OUT_DIR"
-              java -jar plantuml.jar -tsvg "$puml" -o "$(realpath "$OUT_DIR")"
+              java -jar plantuml.jar -tsvg "$puml" -o "$OUT_DIR"
             fi
           }
 
