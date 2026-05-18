@@ -76,6 +76,13 @@ jobs:
             java -jar plantuml.jar -tsvg "$puml" -o "$(pwd)/$OUT_DIR"
           done
 
+      - name: Debug - list generated files
+        run: |
+          echo "=== Generated output ==="
+          find docs/UML -name "*.svg" | sort || echo "No SVGs found"
+          echo "=== Source files ==="
+          find docs/UML/Source -name "*.puml" | sort
+
       - name: Commit generated diagrams
         run: |
           git config user.name "github-actions[bot]"
