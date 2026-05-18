@@ -24,8 +24,27 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Install Graphviz
-        run: sudo apt-get install -y graphviz
+      - name: Cache Graphviz tarball
+        uses: actions/cache@v4
+        with:
+          path: .graphviz
+          key: graphviz-2.42-${{ runner.os }}
+          restore-keys: |
+            graphviz-2.42-
+
+      - name: Download Graphviz (if needed)
+        run: |
+          mkdir -p .graphviz
+          if [ ! -f .graphviz/graphviz.tar.gz ]; then
+            echo "Graphviz not found in cache — downloading"
+            curl -L --fail --retry 3 -o .graphviz/graphviz.tar.gz \
+              https://gitlab.com/graphviz/graphviz/-/archive/2.42.3/graphviz-2.42.3.tar.gz
+            tar -xzf .graphviz/graphviz.tar.gz -C .graphviz
+            sudo cp .graphviz/graphviz-2.42.3/bin/dot /usr/bin/
+          else
+            echo "Graphviz found in cache"
+          fi
+          dot -V
 
       - name: Cache PlantUML JAR
         uses: actions/cache@v4
