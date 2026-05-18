@@ -1,0 +1,15 @@
+@startuml main
+title main (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+package core {
+  class main <<function>> {
+    + main()
+  }
+}
+
+note right of main
+Entry point for the CLI: parses arguments, iterates inputs, calls analyze_path,
+summarizes results, and outputs JSON (via safe_json_dump/safe_json_dumps).
+end note
+
+@enduml

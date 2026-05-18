@@ -1,0 +1,16 @@
+@startuml analyze_path
+title analyze_path (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+package core {
+  class analyze_path <<function>> {
+    + analyze_path(p: Path, recursive: bool, keep: bool, export_dir: Path = None)
+  }
+}
+
+note right of analyze_path
+Analyzes a Path (file, directory, or csv) and delegates to analyze_vul4j_csv,
+analyze_directory, or direct Java file analysis using the IntegratedGNNFramework.
+Returns a result dict including 'cpg' and 'technical_details'.
+end note
+
+@enduml

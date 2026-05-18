@@ -1,0 +1,35 @@
+@startuml bean_vuln_cli_backup
+title bean_vuln_cli_backup (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+
+package core {
+  class bean_vuln_cli_backup <<module>> {
+    - LOG
+    - fw
+    - vul4j_parser
+    - safe_json_dump
+    - safe_json_dumps
+    + extract_edge_data_comprehensive(analysis_result)
+    + analyze_path(p, recursive, keep, export_dir)
+    + analyze_vul4j_csv(csv_path)
+    + analyze_directory(dir_path, recursive)
+    + main()
+  }
+
+  class IntegratedGNNFramework
+  class FixedVul4JParser
+}
+
+bean_vuln_cli_backup ..> IntegratedGNNFramework : uses
+bean_vuln_cli_backup ..> FixedVul4JParser : uses
+bean_vuln_cli_backup ..> safe_json_dump : uses
+bean_vuln_cli_backup ..> safe_json_dumps : uses
+
+note right of bean_vuln_cli_backup
+This diagram documents the module-level functions and globals for
+`src/core/bean_vuln_cli_backup.py`.
+- Global objects: `fw` (IntegratedGNNFramework), `vul4j_parser` (FixedVul4JParser), `LOG` (logger)
+- Main functions show CLI behavior and analysis flows.
+end note
+
+@enduml

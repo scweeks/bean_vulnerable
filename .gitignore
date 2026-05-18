@@ -92,6 +92,7 @@ evidence_spans.json
 
 # Allow generated UML diagrams
 !docs/UML/Class/**/*.svg
+!docs/UML/Activity/**/*.svg
 !docs/UML/Sequence/**/*.svg
 !docs/UML/UseCase/**/*.svg
 !docs/UML/State/**/*.svg
@@ -222,6 +223,11 @@ fix_bean_vulnerable_circular_ref.sh
 *.md.bak
 *_backup/
 bean_vulnerable_backup/
+
+## Ensure PUML sources under docs/UML/Source are not ignored
+!docs/UML/Source/
+!docs/UML/Source/**/
+!docs/UML/Source/**/*.puml
 
 # Test files
 test_quick_taint.java

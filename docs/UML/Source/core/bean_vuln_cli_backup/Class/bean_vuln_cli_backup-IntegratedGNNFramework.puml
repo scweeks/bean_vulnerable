@@ -1,0 +1,17 @@
+@startuml IntegratedGNNFramework
+title IntegratedGNNFramework (referenced by bean_vuln_cli_backup)
+skinparam classAttributeIconSize 0
+package core {
+  class IntegratedGNNFramework {
+    + analyze_code(source_code: str, source_path: str)
+    + train(...)
+    + predict(...)
+  }
+}
+
+note right of IntegratedGNNFramework
+Placeholder UML for the framework used by the CLI. Detailed class diagrams
+for the framework live under `docs/UML/Source/core/` if available.
+end note
+
+@enduml

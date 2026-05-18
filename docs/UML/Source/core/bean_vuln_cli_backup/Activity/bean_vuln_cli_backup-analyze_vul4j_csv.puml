@@ -1,0 +1,16 @@
+@startuml analyze_vul4j_csv
+title analyze_vul4j_csv (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+package core {
+  class analyze_vul4j_csv <<function>> {
+    + analyze_vul4j_csv(csv_path: Path)
+  }
+}
+
+note right of analyze_vul4j_csv
+Uses the VUL4J parser to iterate vulnerabilities, runs analysis via the
+framework and collects dataset-level summaries (total nodes/edges/confidence).
+Requires `vul4j_parser` to be available.
+end note
+
+@enduml

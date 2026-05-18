@@ -1,0 +1,15 @@
+@startuml analyze_directory
+title analyze_directory (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+package core {
+  class analyze_directory <<function>> {
+    + analyze_directory(dir_path: Path, recursive: bool)
+  }
+}
+
+note right of analyze_directory
+Walks directory for Java files and delegates to analyze_path for each file.
+Returns aggregated or first-file result depending on behavior.
+end note
+
+@enduml

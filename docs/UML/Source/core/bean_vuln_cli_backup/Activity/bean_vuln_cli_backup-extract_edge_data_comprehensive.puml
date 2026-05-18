@@ -1,0 +1,17 @@
+@startuml extract_edge_data_comprehensive
+title extract_edge_data_comprehensive (from src/core/bean_vuln_cli_backup.py)
+skinparam classAttributeIconSize 0
+package core {
+  class extract_edge_data_comprehensive <<function>> {
+    + extract_edge_data_comprehensive(analysis_result)
+    ' Returns: metrics dict with node_count, edge_count, method_count, call_count, cfg_count
+  }
+}
+
+note right of extract_edge_data_comprehensive
+Performs deep inspection of analysis results (objects or dicts) to extract
+node/edge counts and related metrics. Handles multiple edge storage patterns
+and recurses to find edge arrays.
+end note
+
+@enduml

@@ -1,0 +1,16 @@
+@startuml FixedVul4JParser
+title FixedVul4JParser (referenced by bean_vuln_cli_backup)
+skinparam classAttributeIconSize 0
+package core {
+  class FixedVul4JParser {
+    - available_vulnerabilities
+    + get_vulnerability_info(vul_id)
+  }
+}
+
+note right of FixedVul4JParser
+Placeholder UML for the VUL4J parser integration used by the CLI. Includes
+available_vulnerabilities and accessors used by the CLI for sampling.
+end note
+
+@enduml
