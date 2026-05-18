@@ -1,67 +1,92 @@
-name: Render UML diagrams
-
-permissions:
-  contents: write
+name: Generate PlantUML Diagrams
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/UML/Source/**/*.puml'
+  workflow_dispatch:
 
 jobs:
-  render-uml:
-    name: Render PlantUML -> SVG
+  generate-diagrams:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        persist-credentials: true
-        fetch-depth: 0
+      - uses: actions/checkout@v3
 
-    - name: Set up Java
-      uses: actions/setup-java@v3
-      with:
-        distribution: 'temurin'
-        java-version: '11'
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: '17'
 
-    - name: Download PlantUML JAR
-      shell: bash
-      run: |
-        set -euo pipefail
-        echo "Downloading PlantUML"
-        curl -L -o plantuml.jar https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+      - name: Install Graphviz
+        run: sudo apt-get install -y graphviz
 
-    - name: Render PlantUML diagrams
-      shell: bash
-      run: |
-        set -euo pipefail
-        echo "Rendering PlantUML diagrams from docs/UML/Source -> docs/UML/Class using plantuml.jar"
-        mkdir -p docs/UML/Class
-        if [ -d "docs/UML/Source" ]; then
-          find docs/UML/Source -name '*.puml' -print0 | while IFS= read -r -d '' f; do
-            rel="${f#docs/UML/Source/}"
-            outdir="docs/UML/Class/$(dirname "$rel")"
-            mkdir -p "$outdir"
-            echo "Rendering $f -> $outdir"
-            java -jar plantuml.jar -tsvg "$f" -o "$outdir"
+      - name: Download PlantUML JAR
+        run: |
+          curl -L -o plantuml.jar \
+            https://github.com/plantuml/plantuml/releases/latest/download/plantuml-gplv2.jar
+
+      - name: Generate SVGs with auto-routing
+        run: |
+          find docs/UML/Source -name "*.puml" | while read puml; do
+
+            # Determine diagram type from file content
+            if grep -qiE "^\s*@startuml" "$puml"; then
+              if grep -qiE "^\s*(class |abstract |interface |enum )" "$puml"; then
+                TYPE="Class"
+              elif grep -qiE "^\s*(\->|<\-|\".*\"\s*\->)" "$puml"; then
+                TYPE="Sequence"
+              elif grep -qiE "^\s*(actor |usecase |\(.*\))" "$puml"; then
+                TYPE="UseCase"
+              elif grep -qiE "^\s*(state |^\s*\[H\]|\[\*\])" "$puml"; then
+                TYPE="State"
+              elif grep -qiE "^\s*(component |package |node |cloud |database )" "$puml"; then
+                TYPE="Component"
+              elif grep -qiE "^\s*(object )" "$puml"; then
+                TYPE="Object"
+              elif grep -qiE "^\s*(concise |robust |clock )" "$puml"; then
+                TYPE="Timing"
+              elif grep -qiE "^\s*(gantt|@startgantt)" "$puml"; then
+                TYPE="Gantt"
+              elif grep -qiE "^\s*(mindmap|@startmindmap)" "$puml"; then
+                TYPE="MindMap"
+              else
+                TYPE="Other"
+              fi
+            else
+              echo "Skipping $puml — no @startuml found"
+              continue
+            fi
+
+            # Mirror the Source subfolder structure into the output folder
+            # e.g. docs/UML/Source/core/foo.puml -> docs/UML/Class/core/foo.svg
+            REL_PATH="${puml#docs/UML/Source/}"        # strip the Source prefix
+            SUB_DIR=$(dirname "$REL_PATH")              # e.g. "core"
+            OUT_DIR="docs/UML/$TYPE/$SUB_DIR"
+
+            mkdir -p "$OUT_DIR"
+
+            echo "Processing: $puml -> $OUT_DIR [$TYPE]"
+            java -jar plantuml.jar -tsvg "$puml" -o "$(pwd)/$OUT_DIR"
           done
-        else
-          echo "No docs/UML/Source directory found; nothing to render."
-        fi
 
-    - name: Commit rendered diagrams
-      shell: bash
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        git add docs/UML/Class || true
-        if git diff --staged --quiet; then
-          echo "No rendered changes to commit"
-        else
-          git commit -m "ci: Auto-render UML diagrams"
+      - name: Commit generated diagrams
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/UML/Class \
+                  docs/UML/Sequence \
+                  docs/UML/UseCase \
+                  docs/UML/State \
+                  docs/UML/Component \
+                  docs/UML/Object \
+                  docs/UML/Timing \
+                  docs/UML/Gantt \
+                  docs/UML/MindMap \
+                  docs/UML/Other
+          git diff --staged --quiet || git commit -m "ci: auto-generate UML diagrams [skip ci]"
           git push
-        fi
