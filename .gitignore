@@ -90,20 +90,15 @@ temp*/
 cpg_slice.json
 evidence_spans.json
 
-# Allow ALL generated UML diagrams (exceptions to *.svg above)
-!docs/UML/Activity/**/*.svg
-!docs/UML/Class/**/*.svg
-!docs/UML/Component/**/*.svg
-!docs/UML/Deployment/**/*.svg
-!docs/UML/Gantt/**/*.svg
-!docs/UML/MindMap/**/*.svg
-!docs/UML/Object/**/*.svg
-!docs/UML/Other/**/*.svg
-!docs/UML/Package/**/*.svg
-!docs/UML/Sequence/**/*.svg
-!docs/UML/State/**/*.svg
-!docs/UML/Timing/**/*.svg
-!docs/UML/UseCase/**/*.svg
+# Allow ALL generated UML diagrams and all docs/UML subdirectories
+!docs/UML/
+!docs/UML/**/
+!docs/UML/**/*.svg
+
+# Ensure PUML sources under docs/UML/Source are not ignored
+!docs/UML/Source/
+!docs/UML/Source/**/
+!docs/UML/Source/**/*.puml
 
 # Allow documentation screenshots
 !examples/*.png
@@ -224,17 +219,7 @@ fix_bean_vulnerable_circular_ref.sh
 # Backup files
 *.md.bak
 bean_vulnerable_backup/
-
-# Un-ignore docs/UML before *_backup/ fires so bean_vuln_cli_backup
-# directories inside docs/UML are not blocked
-!docs/UML/
-!docs/UML/**/
 *_backup/
-
-# Ensure PUML sources under docs/UML/Source are not ignored
-!docs/UML/Source/
-!docs/UML/Source/**/
-!docs/UML/Source/**/*.puml
 
 # Test files
 test_quick_taint.java
