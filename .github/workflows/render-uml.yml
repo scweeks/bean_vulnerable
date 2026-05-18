@@ -27,8 +27,10 @@ jobs:
 
       - name: Download PlantUML JAR
         run: |
-          curl -L -o plantuml.jar \
-            https://github.com/plantuml/plantuml/releases/latest/download/plantuml-gplv2.jar
+          curl -L --fail --retry 3 -o plantuml.jar \
+            https://github.com/plantuml/plantuml/releases/download/v1.2026.3/plantuml-gplv2-1.2026.3.jar
+          
+          java -jar plantuml.jar -version
 
       - name: Generate SVGs with auto-routing
         run: |
