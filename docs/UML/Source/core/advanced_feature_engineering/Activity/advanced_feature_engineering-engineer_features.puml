@@ -1,0 +1,28 @@
+@startuml engineer_features_activity
+title engineer_features() — Activity (AdvancedFeatureEngineer)
+start
+ :start timer;
+ if (graph_data present?) then (yes)
+   :_extract_gat_features(graph_data);
+ else (no)
+   -
+ endif
+
+ if (temporal_data present?) then (yes)
+   :_extract_temporal_features(temporal_data);
+ else (no)
+   -
+ endif
+
+ :multiscale = MultiScaleAnalyzer.analyze_multiscale(code_data);
+ :combined = _combine_advanced_features({gat, temporal, multiscale});
+ :stop timer;
+ :return results;
+stop
+
+note right
+Activity diagram documents the control flow, decisions,
+and aggregation steps used by `engineer_features()`.
+end note
+
+@enduml

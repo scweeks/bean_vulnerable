@@ -1,0 +1,50 @@
+@startuml engineer_features_sequence
+title engineer_features() — Sequence (AdvancedFeatureEngineer)
+actor Caller
+participant AdvancedFeatureEngineer as AFE
+participant GraphAttentionNetwork as GAT
+participant TemporalGraphNetwork as TGN
+participant MultiScaleAnalyzer as MSA
+participant FunctionLevelAnalyzer as FLA
+participant FileLevelAnalyzer as FiLA
+participant ProjectLevelAnalyzer as PLA
+
+Caller -> AFE: engineer_features(code_data)
+activate AFE
+AFE -> AFE: start timer
+
+alt graph_data present
+  AFE -> GAT: _extract_gat_features(graph_data)
+  activate GAT
+  GAT -> GAT: forward(node_features, edges)
+  GAT --> AFE: gat_features
+  deactivate GAT
+end
+
+alt temporal_data present
+  AFE -> TGN: _extract_temporal_features(temporal_data)
+  activate TGN
+  TGN -> TGN: forward(node_sequences, edge_sequences)
+  TGN --> AFE: temporal_features
+  deactivate TGN
+end
+
+AFE -> MSA: analyze_multiscale(code_data)
+activate MSA
+MSA -> FLA: analyze(function_code) [if 'function' scale]
+MSA -> FiLA: analyze(file_code) [if 'file' scale]
+MSA -> PLA: analyze(project_context) [if 'project' scale]
+MSA --> AFE: multiscale_features
+deactivate MSA
+
+AFE -> AFE: _combine_advanced_features(advanced_features)
+AFE -> AFE: stop timer
+AFE --> Caller: results
+deactivate AFE
+
+note over AFE,MSA
+This sequence documents the runtime interactions for `engineer_features()`.
+It captures conditional branches and analyzer delegation.
+end note
+
+@enduml

@@ -1,0 +1,49 @@
+@startuml analyze_multiscale_sequence
+title analyze_multiscale() — Sequence (MultiScaleAnalyzer)
+actor Caller
+participant MultiScaleAnalyzer as MSA
+participant FunctionLevelAnalyzer as FLA
+participant FileLevelAnalyzer as FiLA
+participant ProjectLevelAnalyzer as PLA
+participant Aggregator
+
+Caller -> MSA: analyze_multiscale(code_data)
+activate MSA
+MSA -> MSA: prepare scale_results, scale_features
+
+alt 'function' in scales
+  MSA -> FLA: analyze(function_code)
+  activate FLA
+  FLA --> MSA: function_result
+  deactivate FLA
+end
+
+alt 'file' in scales
+  MSA -> FiLA: analyze(file_code)
+  activate FiLA
+  FiLA --> MSA: file_result
+  deactivate FiLA
+end
+
+alt 'project' in scales
+  MSA -> PLA: analyze(project_context)
+  activate PLA
+  PLA --> MSA: project_result
+  deactivate PLA
+end
+
+MSA -> Aggregator: _combine_scales(scale_results, scale_features)
+activate Aggregator
+Aggregator -> Aggregator: choose aggregation_method
+Aggregator --> MSA: combined_result
+deactivate Aggregator
+
+MSA --> Caller: multiscale_analysis result
+deactivate MSA
+
+note right of MSA
+Includes conditional analyzer calls and a single aggregation step
+which may call weighted_average, max_pooling, attention, or simple average.
+end note
+
+@enduml

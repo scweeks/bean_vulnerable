@@ -1,0 +1,39 @@
+@startuml analyze_multiscale_activity
+title analyze_multiscale() — Activity (MultiScaleAnalyzer)
+start
+ :initialize scale_results, scale_features;
+ if ("function" in scales and function_code present?) then (yes)
+   :call FunctionLevelAnalyzer.analyze(function_code);
+   :store function_result;
+ endif
+
+ if ("file" in scales and file_code present?) then (yes)
+   :call FileLevelAnalyzer.analyze(file_code);
+   :store file_result;
+ endif
+
+ if ("project" in scales and project_context present?) then (yes)
+   :call ProjectLevelAnalyzer.analyze(project_context);
+   :store project_result;
+ endif
+
+ :combined = _combine_scales(scale_results, scale_features);
+ if (aggregation_method == 'weighted_average') then (weighted)
+   :_weighted_average_combination(...);
+ elseif (aggregation_method == 'max_pooling') then (max)
+   :_max_pooling_combination(...);
+ elseif (aggregation_method == 'attention') then (attention)
+   :_attention_combination(...);
+ else
+   :_simple_average_combination(...);
+ endif
+
+ :return {multiscale_analysis, individual_scales, scale_features};
+stop
+
+note right
+Activity diagram documents branching by configured scales
+and selection of aggregation algorithm.
+end note
+
+@enduml
