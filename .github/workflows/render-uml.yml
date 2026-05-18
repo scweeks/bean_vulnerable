@@ -206,6 +206,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
+          echo "=== gitignore check ==="
+          git check-ignore -v docs/UML/Activity/core/bean_vuln_cli_backup/analyze_directory.svg || echo "NOT ignored"
+          cat .gitignore | grep -A5 "backup"
+          
           echo "=== Checking gitignore for bean_vuln_cli_backup ==="
           git check-ignore -v docs/UML/Activity/core/bean_vuln_cli_backup/analyze_directory.svg || echo "NOT ignored"
           git check-ignore -v docs/UML/Class/core/bean_vuln_cli_backup/FixedVul4JParser.svg || echo "NOT ignored"
