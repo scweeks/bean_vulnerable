@@ -90,7 +90,7 @@ temp*/
 cpg_slice.json
 evidence_spans.json
 
-# Allow ALL generated UML diagrams
+# Allow ALL generated UML diagrams (exceptions to *.svg above)
 !docs/UML/Activity/**/*.svg
 !docs/UML/Class/**/*.svg
 !docs/UML/Component/**/*.svg
@@ -223,20 +223,15 @@ fix_bean_vulnerable_circular_ref.sh
 
 # Backup files
 *.md.bak
-*_backup/
 bean_vulnerable_backup/
 
-# Allow UML diagrams for backup modules
-!docs/UML/Activity/core/bean_vuln_cli_backup/
-!docs/UML/Activity/core/bean_vuln_cli_backup/**
-!docs/UML/Class/core/bean_vuln_cli_backup/
-!docs/UML/Class/core/bean_vuln_cli_backup/**
-!docs/UML/Package/core/bean_vuln_cli_backup/
-!docs/UML/Package/core/bean_vuln_cli_backup/**
-!docs/UML/Sequence/core/bean_vuln_cli_backup/
-!docs/UML/Sequence/core/bean_vuln_cli_backup/**
+# Un-ignore docs/UML before *_backup/ fires so bean_vuln_cli_backup
+# directories inside docs/UML are not blocked
+!docs/UML/
+!docs/UML/**/
+*_backup/
 
-## Ensure PUML sources under docs/UML/Source are not ignored
+# Ensure PUML sources under docs/UML/Source are not ignored
 !docs/UML/Source/
 !docs/UML/Source/**/
 !docs/UML/Source/**/*.puml
