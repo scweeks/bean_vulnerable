@@ -205,15 +205,22 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Stage deletions of tracked files that were cleaned up
+
+          echo "=== Checking gitignore for bean_vuln_cli_backup ==="
+          git check-ignore -v docs/UML/Activity/core/bean_vuln_cli_backup/analyze_directory.svg || echo "NOT ignored"
+          git check-ignore -v docs/UML/Class/core/bean_vuln_cli_backup/FixedVul4JParser.svg || echo "NOT ignored"
+
+          echo "=== All SVGs on disk ==="
+          find docs/UML -name "*.svg" | sort
+
+          echo "=== Git status before staging ==="
+          git status
+
           git add -u docs/UML
-          
-          # Stage all newly generated SVGs (untracked new files)
           git add docs/UML
-          
+
           echo "=== Staged changes ==="
           git diff --staged --name-status
-          
+
           git diff --staged --quiet || git commit -m "ci: auto-generate UML diagrams [skip ci]"
           git push
