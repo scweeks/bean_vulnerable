@@ -40,10 +40,10 @@ jobs:
           set -euo pipefail
           find docs/UML/Source -name "*.puml" | while IFS= read -r puml; do
             REL_PATH="${puml#docs/UML/Source/}"
-            # Known UML types
-            UML_TYPES=(Class Activity Sequence Package Component State UseCase Deployment Object Timing Gantt MindMap Other)
             IFS='/' read -r -a PARTS <<< "$REL_PATH"
 
+            # Preferred: detect type from path segments
+            UML_TYPES=(Class Activity Sequence Package Component State UseCase Deployment Object Timing Gantt MindMap Other)
             TYPE_SRC=""
             TYPE_INDEX=-1
             for idx in "${!PARTS[@]}"; do
@@ -57,19 +57,42 @@ jobs:
               done
             done
 
+            # Fallback: content heuristics if path did not contain a known type
             if [ -z "$TYPE_SRC" ]; then
-              TYPE_SRC="Other"
+              CONTENT=$(sed -n '1,200p' "$puml" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')
+              if echo "$CONTENT" | grep -q '@startgantt'; then
+                TYPE_SRC="Gantt"
+              elif echo "$CONTENT" | grep -q '@startmindmap'; then
+                TYPE_SRC="MindMap"
+              elif echo "$CONTENT" | grep -Eq '\b(start|stop|partition|fork|merge|repeat)\b'; then
+                TYPE_SRC="Activity"
+              elif echo "$CONTENT" | grep -Eq '\b(participant|activate|deactivate|->|<-|-->|<--)'; then
+                TYPE_SRC="Sequence"
+              elif echo "$CONTENT" | grep -Eq '\b(class|interface|abstract|enum)\b'; then
+                TYPE_SRC="Class"
+              elif echo "$CONTENT" | grep -Eq '\b(actor|usecase|\(.*\))\b'; then
+                TYPE_SRC="UseCase"
+              elif echo "$CONTENT" | grep -Eq '\b(state\b|\[\*\])'; then
+                TYPE_SRC="State"
+              elif echo "$CONTENT" | grep -Eq '\b(component|node|cloud|database)\b'; then
+                TYPE_SRC="Component"
+              elif echo "$CONTENT" | grep -Eq '\bobject\b'; then
+                TYPE_SRC="Object"
+              else
+                TYPE_SRC="Other"
+              fi
               TYPE_INDEX=0
             fi
 
+            # Build OUT_DIR preserving module hierarchy before the type segment
             if [ $TYPE_INDEX -gt 0 ]; then
-              MODULE_PATH="${PARTS[@]:0:$TYPE_INDEX}"
+              MODULE_PATH=("${PARTS[@]:0:$TYPE_INDEX}")
               MODULE_DIR=$(printf "%s/" "${MODULE_PATH[@]}" | sed 's:/$::')
             else
               MODULE_DIR=""
             fi
 
-            REM_AFTER_TYPE=("")
+            REM_AFTER_TYPE=()
             if [ $TYPE_INDEX -lt $(( ${#PARTS[@]} - 1 )) ]; then
               start=$((TYPE_INDEX + 1))
               end=$(( ${#PARTS[@]} - 1 ))
@@ -85,7 +108,12 @@ jobs:
               OUT_DIR="$OUT_DIR/$REM_DIR"
             fi
 
-            echo "Source: $puml -> Output: $OUT_DIR"
+            # Append a folder named after the PUML basename (python filename) so
+            # final layout is: docs/UML/<Type>/<module path>/<subdirs>/<puml_basename>/<diagram>.svg
+            PUMl_BASENAME=$(basename "$puml" .puml)
+            OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+
+            echo "Source: $puml -> Output: $OUT_DIR (detected: $TYPE_SRC)"
           done
 
       - name: Generate SVGs (map Source -> docs/UML/<Type>)
@@ -100,65 +128,87 @@ jobs:
               continue
             fi
 
-              REL_PATH="${puml#docs/UML/Source/}"
+            REL_PATH="${puml#docs/UML/Source/}"
+            IFS='/' read -r -a PARTS <<< "$REL_PATH"
 
-              # Known UML types (case-insensitive)
-              UML_TYPES=(Class Activity Sequence Package Component State UseCase Deployment Object Timing Gantt MindMap UseCase)
-              IFS='/' read -r -a PARTS <<< "$REL_PATH"
-
-              TYPE_SRC=""
-              TYPE_INDEX=-1
-              for idx in "${!PARTS[@]}"; do
-                part="${PARTS[$idx]}"
-                for t in "${UML_TYPES[@]}"; do
-                  if [ "$(echo "$part" | tr '[:upper:]' '[:lower:]')" = "$(echo "$t" | tr '[:upper:]' '[:lower:]')" ]; then
-                    TYPE_SRC="$t"
-                    TYPE_INDEX=$idx
-                    break 2
-                  fi
-                done
+            # Preferred: detect type from path
+            UML_TYPES=(Class Activity Sequence Package Component State UseCase Deployment Object Timing Gantt MindMap Other)
+            TYPE_SRC=""
+            TYPE_INDEX=-1
+            for idx in "${!PARTS[@]}"; do
+              part="${PARTS[$idx]}"
+              for t in "${UML_TYPES[@]}"; do
+                if [ "$(echo "$part" | tr '[:upper:]' '[:lower:]')" = "$(echo "$t" | tr '[:upper:]' '[:lower:]')" ]; then
+                  TYPE_SRC="$t"
+                  TYPE_INDEX=$idx
+                  break 2
+                fi
               done
+            done
 
-              if [ -z "$TYPE_SRC" ]; then
-                echo "WARNING: Could not detect UML type in path: $REL_PATH — placing under docs/UML/Other"
-                TYPE_SRC="Other"
-                TYPE_INDEX=0
-              fi
-
-              # Module path is parts before TYPE_INDEX
-              if [ $TYPE_INDEX -gt 0 ]; then
-                MODULE_PATH="${PARTS[@]:0:$TYPE_INDEX}"
-                # join MODULE_PATH with /
-                MODULE_DIR=$(printf "%s/" "${MODULE_PATH[@]}" | sed 's:/$::')
+            # Fallback: content heuristics
+            if [ -z "$TYPE_SRC" ]; then
+              CONTENT=$(sed -n '1,200p' "$puml" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')
+              if echo "$CONTENT" | grep -q '@startgantt'; then
+                TYPE_SRC="Gantt"
+              elif echo "$CONTENT" | grep -q '@startmindmap'; then
+                TYPE_SRC="MindMap"
+              elif echo "$CONTENT" | grep -Eq '\b(start|stop|partition|fork|merge|repeat)\b'; then
+                TYPE_SRC="Activity"
+              elif echo "$CONTENT" | grep -Eq '\b(participant|activate|deactivate|->|<-|-->|<--)'; then
+                TYPE_SRC="Sequence"
+              elif echo "$CONTENT" | grep -Eq '\b(class|interface|abstract|enum)\b'; then
+                TYPE_SRC="Class"
+              elif echo "$CONTENT" | grep -Eq '\b(actor|usecase|\(.*\))\b'; then
+                TYPE_SRC="UseCase"
+              elif echo "$CONTENT" | grep -Eq '\b(state\b|\[\*\])'; then
+                TYPE_SRC="State"
+              elif echo "$CONTENT" | grep -Eq '\b(component|node|cloud|database)\b'; then
+                TYPE_SRC="Component"
+              elif echo "$CONTENT" | grep -Eq '\bobject\b'; then
+                TYPE_SRC="Object"
               else
-                MODULE_DIR=""
+                TYPE_SRC="Other"
               fi
+              TYPE_INDEX=0
+            fi
 
-              # Any subdirs after type (excluding filename)
-              REM_AFTER_TYPE=("")
-              if [ $TYPE_INDEX -lt $(( ${#PARTS[@]} - 1 )) ]; then
-                # slice parts after TYPE_INDEX up to last element (filename)
-                start=$((TYPE_INDEX + 1))
-                end=$(( ${#PARTS[@]} - 1 ))
-                REM_AFTER_TYPE=("${PARTS[@]:$start:$((end-start))}")
-              fi
+            # Module path is parts before TYPE_INDEX
+            if [ $TYPE_INDEX -gt 0 ]; then
+              MODULE_PATH=("${PARTS[@]:0:$TYPE_INDEX}")
+              MODULE_DIR=$(printf "%s/" "${MODULE_PATH[@]}" | sed 's:/$::')
+            else
+              MODULE_DIR=""
+            fi
 
-              # Build output directory: docs/UML/<Type>/(module_dir)/(rem_after_type)
-              OUT_DIR="docs/UML/$TYPE_SRC"
-              if [ -n "$MODULE_DIR" ]; then
-                OUT_DIR="$OUT_DIR/$MODULE_DIR"
-              fi
-              if [ ${#REM_AFTER_TYPE[@]} -gt 0 ]; then
-                # join REM_AFTER_TYPE
-                REM_DIR=$(printf "%s/" "${REM_AFTER_TYPE[@]}" | sed 's:/$::')
-                OUT_DIR="$OUT_DIR/$REM_DIR"
-              fi
+            # Any subdirs after type (excluding filename)
+            REM_AFTER_TYPE=()
+            if [ $TYPE_INDEX -lt $(( ${#PARTS[@]} - 1 )) ]; then
+              start=$((TYPE_INDEX + 1))
+              end=$(( ${#PARTS[@]} - 1 ))
+              REM_AFTER_TYPE=("${PARTS[@]:$start:$((end-start))}")
+            fi
 
-              mkdir -p "$OUT_DIR"
-              echo "Processing: $puml -> $OUT_DIR (detected type: $TYPE_SRC)"
+            # Build output directory: docs/UML/<Type>/(module_dir)/(rem_after_type)
+            OUT_DIR="docs/UML/$TYPE_SRC"
+            if [ -n "$MODULE_DIR" ]; then
+              OUT_DIR="$OUT_DIR/$MODULE_DIR"
+            fi
+            if [ ${#REM_AFTER_TYPE[@]} -gt 0 ]; then
+              REM_DIR=$(printf "%s/" "${REM_AFTER_TYPE[@]}" | sed 's:/$::')
+              OUT_DIR="$OUT_DIR/$REM_DIR"
+            fi
 
-              # Run PlantUML and write output SVG into the computed OUT_DIR
-              java -jar plantuml.jar -tsvg "$puml" -o "$OUT_DIR"
+            # Create subfolder for this PUML basename so multiple diagrams per
+            # source file live under a dedicated folder named after the python file.
+            PUMl_BASENAME=$(basename "$puml" .puml)
+            OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+
+            mkdir -p "$OUT_DIR"
+            echo "Processing: $puml -> $OUT_DIR (detected type: $TYPE_SRC)"
+
+            # Run PlantUML and write output SVG into the computed OUT_DIR
+            java -jar plantuml.jar -tsvg "$puml" -o "$OUT_DIR"
           done
 
       - name: Debug - list generated files
