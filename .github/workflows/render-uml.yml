@@ -27,11 +27,25 @@ jobs:
       - name: Install Graphviz
         run: sudo apt-get install -y graphviz
 
-      - name: Download PlantUML JAR
+      - name: Cache PlantUML JAR
+        uses: actions/cache@v4
+        with:
+          path: .plantuml/plantuml.jar
+          key: plantuml-1.2026.3-${{ runner.os }}
+          restore-keys: |
+            plantuml-1.2026.3-
+
+      - name: Download PlantUML JAR (if needed)
         run: |
-          curl -L --fail --retry 3 -o plantuml.jar \
-            https://github.com/plantuml/plantuml/releases/download/v1.2026.3/plantuml-gplv2-1.2026.3.jar
-          java -jar plantuml.jar -version
+          mkdir -p .plantuml
+          if [ ! -f .plantuml/plantuml.jar ]; then
+            echo "PlantUML JAR not found in cache — downloading"
+            curl -L --fail --retry 3 -o .plantuml/plantuml.jar \
+              https://github.com/plantuml/plantuml/releases/download/v1.2026.3/plantuml-gplv2-1.2026.3.jar
+          else
+            echo "PlantUML JAR found in cache"
+          fi
+          java -jar .plantuml/plantuml.jar -version
 
       - name: Define mapping function
         id: define-func
@@ -138,7 +152,7 @@ jobs:
             else
               mkdir -p "$OUT_DIR"
               echo "Rendering: $puml -> $OUT_DIR"
-              java -jar plantuml.jar -tsvg "$puml" -o "$OUT_DIR"
+              java -jar plantuml.jar -tsvg "$puml" -o "$(realpath "$OUT_DIR")"
             fi
           }
 
@@ -147,6 +161,11 @@ jobs:
 
           chmod +x map_and_render.sh
 
+      - name: Clean old UML outputs
+        run: |
+          echo "Cleaning old UML diagrams..."
+          find docs/UML -type f -name "*.svg" -delete || true
+          
       - name: Dry-run mapping
         run: |
           find docs/UML/Source -name "*.puml" | while read -r puml; do
