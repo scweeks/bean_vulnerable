@@ -37,35 +37,42 @@ jobs:
       - name: Generate SVGs with auto-routing
         run: |
           while IFS= read -r puml; do
-
-            if grep -qiE "^\s*@startuml" "$puml"; then
-              if grep -qiE "^\s*(class |abstract |interface |enum )" "$puml"; then
-                TYPE="Class"
-              elif grep -qiE "^\s*(\->|<\-|\".*\"\s*\->)" "$puml"; then
-                TYPE="Sequence"
-              elif grep -qiE "^\s*(actor |usecase |\(.*\))" "$puml"; then
-                TYPE="UseCase"
-              elif grep -qiE "^\s*(state |\[\*\])" "$puml"; then
-                TYPE="State"
-              elif grep -qiE "^\s*(component |node |cloud |database )" "$puml"; then
-                TYPE="Component"
-              elif grep -qiE "^\s*(object )" "$puml"; then
-                TYPE="Object"
-              elif grep -qiE "^\s*(concise |robust |clock )" "$puml"; then
-                TYPE="Timing"
-              elif grep -qiE "(@startgantt|@startmindmap)" "$puml"; then
+            if grep -qiE '^[[:space:]]*@(startuml|startgantt|startmindmap)' "$puml"; then
+              if grep -qiE '^[[:space:]]*@startgantt' "$puml"; then
                 TYPE="Gantt"
+              elif grep -qiE '^[[:space:]]*@startmindmap' "$puml"; then
+                TYPE="MindMap"
+              elif grep -qiE '^[[:space:]]*(class|abstract|interface|enum)[[:space:]]+' "$puml"; then
+                TYPE="Class"
+              elif grep -qiE '^[[:space:]]*.+[[:space:]]*(-+>|<-+|-->|<--)' "$puml"; then
+                TYPE="Sequence"
+              elif grep -qiE '^[[:space:]]*(actor|usecase|\(.*\))' "$puml"; then
+                TYPE="UseCase"
+              elif grep -qiE '^[[:space:]]*(state[[:space:]]+|\[\*\])' "$puml"; then
+                TYPE="State"
+              elif grep -qiE '^[[:space:]]*(component|node|cloud|database)[[:space:]]+' "$puml"; then
+                TYPE="Component"
+              elif grep -qiE '^[[:space:]]*object[[:space:]]+' "$puml"; then
+                TYPE="Object"
+              elif grep -qiE '^[[:space:]]*(concise|robust|clock)[[:space:]]+' "$puml"; then
+                TYPE="Timing"
               else
                 TYPE="Other"
               fi
             else
-              echo "Skipping $puml — no @startuml found"
+              echo "Skipping $puml — no recognized PlantUML start directive found"
               continue
             fi
 
             REL_PATH="${puml#docs/UML/Source/}"
             SUB_DIR=$(dirname "$REL_PATH")
-            OUT_DIR="docs/UML/$TYPE/$SUB_DIR"
+
+            # Extract Python filename (without extension)
+            PY_FILE=$(basename "$REL_PATH" .puml)
+
+            # Correct output directory:
+            # docs/UML/<TYPE>/<SUB_DIR>/<PY_FILE>
+            OUT_DIR="docs/UML/$TYPE/$SUB_DIR/$PY_FILE"
             mkdir -p "$OUT_DIR"
 
             TEMP_DIR=$(mktemp -d)
