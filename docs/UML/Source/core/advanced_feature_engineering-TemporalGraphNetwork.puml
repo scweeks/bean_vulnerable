@@ -1,8 +1,15 @@
 @startuml TemporalGraphNetwork
 title TemporalGraphNetwork (from src/core/advanced_feature_engineering.py)
 skinparam classAttributeIconSize 0
+
+package torch {
+  package nn {
+    class Module
+  }
+}
+
 package core {
-  class TemporalGraphNetwork --|> torch.nn.Module {
+  class TemporalGraphNetwork {
     - node_dim
     - edge_dim
     - hidden_dim
@@ -14,7 +21,10 @@ package core {
     + __init__(node_dim, edge_dim, hidden_dim, num_layers)
     + forward(node_sequences, edge_sequences, timestamps)
   }
+
+  TemporalGraphNetwork --|> torch.nn.Module
 }
+
 note right of TemporalGraphNetwork
 Source: src/core/advanced_feature_engineering.py
 Handles temporal LSTM processing and attention fusion.
