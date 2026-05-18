@@ -20,11 +20,24 @@ jobs:
         persist-credentials: true
         fetch-depth: 0
 
+    - name: Set up Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+
+    - name: Download PlantUML JAR
+      shell: bash
+      run: |
+        set -euo pipefail
+        echo "Downloading PlantUML"
+        curl -L -o plantuml.jar https://github.com/plantuml/plantuml/releases/latest/download/plantuml.jar
+
     - name: Render PlantUML diagrams
       shell: bash
       run: |
         set -euo pipefail
-        echo "Rendering PlantUML diagrams from docs/UML/Source -> docs/UML/Class"
+        echo "Rendering PlantUML diagrams from docs/UML/Source -> docs/UML/Class using plantuml.jar"
         mkdir -p docs/UML/Class
         if [ -d "docs/UML/Source" ]; then
           find docs/UML/Source -name '*.puml' -print0 | while IFS= read -r -d '' f; do
@@ -32,7 +45,7 @@ jobs:
             outdir="docs/UML/Class/$(dirname "$rel")"
             mkdir -p "$outdir"
             echo "Rendering $f -> $outdir"
-            docker run --rm -v "$GITHUB_WORKSPACE":/workspace plantuml/plantuml:latest -tsvg "/workspace/$f" -o "/workspace/$outdir"
+            java -jar plantuml.jar -tsvg "$f" -o "$outdir"
           done
         else
           echo "No docs/UML/Source directory found; nothing to render."
