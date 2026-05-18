@@ -96,22 +96,20 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Only add folders that actually exist
-          for dir in docs/UML/Class \
-                     docs/UML/Sequence \
-                     docs/UML/UseCase \
-                     docs/UML/State \
-                     docs/UML/Component \
-                     docs/UML/Object \
-                     docs/UML/Timing \
-                     docs/UML/Gantt \
-                     docs/UML/MindMap \
-                     docs/UML/Other; do
-            if [ -d "$dir" ]; then
-              git add "$dir"
-            fi
-          done
-          
+
+          echo "=== Git status before add ==="
+          git status
+
+          echo "=== Adding all UML output ==="
+          git add docs/UML/Class docs/UML/Sequence docs/UML/UseCase \
+                  docs/UML/State docs/UML/Component docs/UML/Object \
+                  docs/UML/Timing docs/UML/Gantt docs/UML/MindMap docs/UML/Other 2>/dev/null || true
+
+          echo "=== Git status after add ==="
+          git status
+
+          echo "=== Staged files ==="
+          git diff --staged --name-only
+
           git diff --staged --quiet || git commit -m "ci: auto-generate UML diagrams [skip ci]"
           git push
