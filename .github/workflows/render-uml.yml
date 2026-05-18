@@ -36,10 +36,8 @@ jobs:
 
       - name: Generate SVGs with auto-routing
         run: |
-          ERRORS=0
-          find docs/UML/Source -name "*.puml" | while read puml; do
+          while IFS= read -r puml; do
 
-            # Determine diagram type from file content
             if grep -qiE "^\s*@startuml" "$puml"; then
               if grep -qiE "^\s*(class |abstract |interface |enum )" "$puml"; then
                 TYPE="Class"
@@ -47,18 +45,16 @@ jobs:
                 TYPE="Sequence"
               elif grep -qiE "^\s*(actor |usecase |\(.*\))" "$puml"; then
                 TYPE="UseCase"
-              elif grep -qiE "^\s*(state |^\s*\[H\]|\[\*\])" "$puml"; then
+              elif grep -qiE "^\s*(state |\[\*\])" "$puml"; then
                 TYPE="State"
-              elif grep -qiE "^\s*(component |package |node |cloud |database )" "$puml"; then
+              elif grep -qiE "^\s*(component |node |cloud |database )" "$puml"; then
                 TYPE="Component"
               elif grep -qiE "^\s*(object )" "$puml"; then
                 TYPE="Object"
               elif grep -qiE "^\s*(concise |robust |clock )" "$puml"; then
                 TYPE="Timing"
-              elif grep -qiE "^\s*(gantt|@startgantt)" "$puml"; then
+              elif grep -qiE "(@startgantt|@startmindmap)" "$puml"; then
                 TYPE="Gantt"
-              elif grep -qiE "^\s*(mindmap|@startmindmap)" "$puml"; then
-                TYPE="MindMap"
               else
                 TYPE="Other"
               fi
@@ -67,23 +63,20 @@ jobs:
               continue
             fi
 
-            # Mirror the Source subfolder structure into the output folder
-            # e.g. docs/UML/Source/core/foo.puml -> docs/UML/Class/core/foo.svg
-            REL_PATH="${puml#docs/UML/Source/}"        # strip the Source prefix
-            SUB_DIR=$(dirname "$REL_PATH")              # e.g. "core"
+            REL_PATH="${puml#docs/UML/Source/}"
+            SUB_DIR=$(dirname "$REL_PATH")
             OUT_DIR="docs/UML/$TYPE/$SUB_DIR"
-
             mkdir -p "$OUT_DIR"
+
+            TEMP_DIR=$(mktemp -d)
             echo "Processing: $puml -> $OUT_DIR [$TYPE]"
-            if ! java -jar plantuml.jar -tsvg "$puml" -o "$(pwd)/$OUT_DIR"; then
-              echo "ERROR: Failed to process $puml"
-              ERRORS=$((ERRORS + 1))
-            fi
-          done
-          
-          if [ "$ERRORS" -gt 0 ]; then
-            echo "WARNING: $ERRORS file(s) failed to generate"
-          fi
+            java -jar plantuml.jar -tsvg "$puml" -o "$TEMP_DIR"
+            mv "$TEMP_DIR"/*.svg "$OUT_DIR/" 2>/dev/null && \
+              echo "  Moved to $OUT_DIR" || \
+              echo "  WARNING: No SVGs generated for $puml"
+            rm -rf "$TEMP_DIR"
+
+          done < <(find docs/UML/Source -name "*.puml")
 
       - name: Debug - list generated files
         run: |
