@@ -3,8 +3,13 @@ name: Generate PlantUML Diagrams
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'docs/UML/Source/**/*.puml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'docs/UML/Source/**/*.puml'
+  workflow_dispatch:
 
 jobs:
   generate-diagrams:
@@ -49,136 +54,117 @@ jobs:
           fi
           java -jar .plantuml/plantuml.jar -version
 
-      - name: Define mapping function
-        id: define-func
+      - name: Write render script
         run: |
-          cat << 'EOF' > map_and_render.sh
+          cat << 'SCRIPT' > map_and_render.sh
           #!/usr/bin/env bash
           set -euo pipefail
 
-          UML_TYPES=(Class Activity Sequence Package Component State UseCase Deployment Object Timing Gantt MindMap Other)
-
+          # ── Type detection ───────────────────────────────────────────────────────────
+          # Reads the first 200 lines of the .puml file and detects the diagram type
+          # from content keywords. Returns one of the canonical type folder names.
           detect_type() {
             local puml="$1"
-            local rel="$2"
-            local -n out_type=$3
-            local -n out_index=$4
-
-            IFS='/' read -r -a PARTS <<< "$rel"
-            out_type=""
-            out_index=-1
-
-            # 1. Prefer type from path
-            for idx in "${!PARTS[@]}"; do
-              part="${PARTS[$idx]}"
-              for t in "${UML_TYPES[@]}"; do
-                if [[ "${part,,}" == "${t,,}" ]]; then
-                  out_type="$t"
-                  out_index=$idx
-                  return
-                fi
-              done
-            done
-
-            # 2. Fallback to content
             local CONTENT
-            CONTENT=$(sed -n '1,200p' "$puml" | tr '\n' ' ' | tr '[:upper:]' '[:lower:]')
+            CONTENT=$(sed -n '1,200p' "$puml" | tr '[:upper:]' '[:lower:]')
 
-            if   [[ "$CONTENT" == *"@startgantt"* ]]; then out_type="Gantt"
-            elif [[ "$CONTENT" == *"@startmindmap"* ]]; then out_type="MindMap"
-            elif echo "$CONTENT" | grep -Eq '\b(start|stop|partition|fork|merge|repeat)\b'; then out_type="Activity"
-            elif echo "$CONTENT" | grep -Eq '\b(participant|activate|deactivate|->|<-|-->|<--)'; then out_type="Sequence"
-            elif echo "$CONTENT" | grep -Eq '\b(class|interface|abstract|enum)\b'; then out_type="Class"
-            elif echo "$CONTENT" | grep -Eq '\b(actor|usecase|\(.*\))\b'; then out_type="UseCase"
-            elif echo "$CONTENT" | grep -Eq '\b(state\b|\[\*\])'; then out_type="State"
-            elif echo "$CONTENT" | grep -Eq '\b(component|node|cloud|database)\b'; then out_type="Component"
-            elif echo "$CONTENT" | grep -Eq '\bobject\b'; then out_type="Object"
-            else out_type="Other"
+            if   grep -q '@startgantt'   <<< "$CONTENT"; then echo "Gantt"
+            elif grep -q '@startmindmap' <<< "$CONTENT"; then echo "MindMap"
+            elif grep -Eq '\b(participant|activate|deactivate)\b|->|<-|-->|<--' <<< "$CONTENT"; then echo "Sequence"
+            elif grep -Eq '\b(start|stop|partition|fork|merge|repeat|while|endif|endwhile)\b' <<< "$CONTENT"; then echo "Activity"
+            elif grep -Eq '\b(class|interface|abstract|enum)\b' <<< "$CONTENT"; then echo "Class"
+            elif grep -Eq '\b(actor|usecase)\b|\(.*\)' <<< "$CONTENT"; then echo "UseCase"
+            elif grep -Eq '\b(state)\b|\[\*\]' <<< "$CONTENT"; then echo "State"
+            elif grep -Eq '\b(component|node|cloud|database|artifact)\b' <<< "$CONTENT"; then echo "Component"
+            elif grep -Eq '\bobject\b' <<< "$CONTENT"; then echo "Object"
+            elif grep -Eq '\b(concise|robust|clock)\b' <<< "$CONTENT"; then echo "Timing"
+            else echo "Other"
             fi
-
-            out_index=0
           }
 
+          # ── Output directory ─────────────────────────────────────────────────────────
+          # Maps: docs/UML/Source/<subdir>/<file>.puml
+          #    → docs/UML/<Type>/<subdir>/
+          #
+          # Rule: strip the Source prefix, keep the subdirectory path exactly as-is,
+          # place under the detected type folder. Never append the filename as a folder.
           compute_outdir() {
-            local rel="$1"
+            local puml="$1"
             local type="$2"
-            local type_index="$3"
-            local puml="$4"
-            local -n out_dir=$5
 
-            IFS='/' read -r -a PARTS <<< "$rel"
+            # Strip the leading source path to get the relative subdirectory
+            local rel="${puml#docs/UML/Source/}"   # e.g. core/foo.puml
+            local subdir
+            subdir=$(dirname "$rel")               # e.g. core  (or "." if at root)
 
-            # Module path = before type
-            local MODULE_DIR=""
-            if (( type_index > 0 )); then
-              MODULE_DIR=$(printf "%s/" "${PARTS[@]:0:type_index}" | sed 's:/$::')
-            fi
-
-            # Remaining path after type (excluding filename)
-            local REM_AFTER=()
-            if (( type_index < ${#PARTS[@]} - 1 )); then
-              REM_AFTER=("${PARTS[@]:$((type_index+1)):$(( ${#PARTS[@]} - type_index - 2 ))}")
-            fi
-
-            out_dir="docs/UML/$type"
-            [[ -n "$MODULE_DIR" ]] && out_dir="$out_dir/$MODULE_DIR"
-
-            if (( ${#REM_AFTER[@]} > 0 )); then
-              local REM_DIR
-              REM_DIR=$(printf "%s/" "${REM_AFTER[@]}" | sed 's:/$::')
-              out_dir="$out_dir/$REM_DIR"
-            fi
-
-            # Append python filename folder unless it already contains the type
-            local base
-            base=$(basename "$puml" .puml)
-            local lc_base="${base,,}"
-            local lc_type="${type,,}"
-
-            if [[ "$lc_base" != "$lc_type" && "$lc_base" != *"$lc_type"* ]]; then
-              out_dir="$out_dir/$base"
+            if [[ "$subdir" == "." ]]; then
+              echo "docs/UML/$type"
+            else
+              echo "docs/UML/$type/$subdir"
             fi
           }
 
+          # ── Process a single file ────────────────────────────────────────────────────
           process_file() {
             local puml="$1"
-            local mode="$2" # dry or render
+            local mode="$2"   # "dry" or "render"
 
-            REL="${puml#docs/UML/Source/}"
+            if ! grep -qi '@startuml' "$puml"; then
+              echo "SKIP (no @startuml): $puml"
+              return
+            fi
 
-            detect_type "$puml" "$REL" TYPE TYPE_INDEX
-            compute_outdir "$REL" "$TYPE" "$TYPE_INDEX" "$puml" OUT_DIR
+            local TYPE OUT_DIR TEMP_DIR
+            TYPE=$(detect_type "$puml")
+            OUT_DIR=$(compute_outdir "$puml" "$TYPE")
 
             if [[ "$mode" == "dry" ]]; then
-              echo "Source: $puml -> Output: $OUT_DIR (type: $TYPE)"
-            else
-              mkdir -p "$OUT_DIR"
-              echo "Rendering: $puml -> $OUT_DIR"
-              java -jar .plantuml/plantuml.jar -tsvg "$puml" -o "$OUT_DIR"
+              echo "Source: $puml  ->  $OUT_DIR  [type: $TYPE]"
+              return
             fi
+
+            # Render mode: use a temp dir then move SVGs to avoid PlantUML
+            # resolving -o relative to the source file location.
+            mkdir -p "$OUT_DIR"
+            TEMP_DIR=$(mktemp -d)
+
+            echo "Rendering: $puml  ->  $OUT_DIR  [type: $TYPE]"
+            java -jar .plantuml/plantuml.jar -tsvg "$puml" -o "$TEMP_DIR"
+
+            if compgen -G "$TEMP_DIR/*.svg" > /dev/null; then
+              mv "$TEMP_DIR"/*.svg "$OUT_DIR/"
+              echo "  OK: SVGs moved to $OUT_DIR"
+            else
+              echo "  WARNING: No SVGs produced for $puml"
+            fi
+
+            rm -rf "$TEMP_DIR"
           }
 
-          export -f detect_type compute_outdir process_file
-          EOF
-
+          # ── Entry point ──────────────────────────────────────────────────────────────
+          process_file "$1" "$2"
+          SCRIPT
           chmod +x map_and_render.sh
 
       - name: Dry-run mapping
         run: |
-          find docs/UML/Source -name "*.puml" | while read -r puml; do
-            ./map_and_render.sh "$puml" dry
-          done
+          echo "=== Planned output mapping ==="
+          while IFS= read -r puml; do
+            bash map_and_render.sh "$puml" dry
+          done < <(find docs/UML/Source -name "*.puml" | sort)
 
       - name: Render diagrams
         run: |
-          find docs/UML/Source -name "*.puml" | while read -r puml; do
-            ./map_and_render.sh "$puml" render
-          done
+          while IFS= read -r puml; do
+            bash map_and_render.sh "$puml" render
+          done < <(find docs/UML/Source -name "*.puml" | sort)
 
       - name: Debug - list generated files
         run: |
-          echo "=== Generated output ==="
+          echo "=== Generated SVGs ==="
           find docs/UML -name "*.svg" | sort || echo "No SVGs found"
+          echo "=== Git status ==="
+          git status
 
       - name: Commit generated diagrams
         run: |
