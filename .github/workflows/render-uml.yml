@@ -108,10 +108,15 @@ jobs:
               OUT_DIR="$OUT_DIR/$REM_DIR"
             fi
 
-            # Append a folder named after the PUML basename (python filename) so
-            # final layout is: docs/UML/<Type>/<module path>/<subdirs>/<puml_basename>/<diagram>.svg
+            # Append a folder named after the PUML basename (python filename)
+            # except when the basename is the same as the diagram TYPE (e.g. a
+            # file literally named 'Sequence.puml' living in a Sequence folder).
             PUMl_BASENAME=$(basename "$puml" .puml)
-            OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+            lc_basename=$(echo "$PUMl_BASENAME" | tr '[:upper:]' '[:lower:]')
+            lc_type=$(echo "$TYPE_SRC" | tr '[:upper:]' '[:lower:]')
+            if [ "$lc_basename" != "$lc_type" ]; then
+              OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+            fi
 
             echo "Source: $puml -> Output: $OUT_DIR (detected: $TYPE_SRC)"
           done
@@ -202,7 +207,11 @@ jobs:
             # Create subfolder for this PUML basename so multiple diagrams per
             # source file live under a dedicated folder named after the python file.
             PUMl_BASENAME=$(basename "$puml" .puml)
-            OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+            lc_basename=$(echo "$PUMl_BASENAME" | tr '[:upper:]' '[:lower:]')
+            lc_type=$(echo "$TYPE_SRC" | tr '[:upper:]' '[:lower:]')
+            if [ "$lc_basename" != "$lc_type" ]; then
+              OUT_DIR="$OUT_DIR/$PUMl_BASENAME"
+            fi
 
             mkdir -p "$OUT_DIR"
             echo "Processing: $puml -> $OUT_DIR (detected type: $TYPE_SRC)"
