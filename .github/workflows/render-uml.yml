@@ -24,26 +24,34 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Cache Graphviz tarball
+      - name: Cache Graphviz binaries
         uses: actions/cache@v4
         with:
-          path: .graphviz
+          path: .graphviz-bin
           key: graphviz-2.42-${{ runner.os }}
           restore-keys: |
             graphviz-2.42-
 
-      - name: Download Graphviz (if needed)
+      - name: Install or restore Graphviz
         run: |
-          mkdir -p .graphviz
-          if [ ! -f .graphviz/graphviz.tar.gz ]; then
-            echo "Graphviz not found in cache — downloading"
-            curl -L --fail --retry 3 -o .graphviz/graphviz.tar.gz \
-              https://gitlab.com/graphviz/graphviz/-/archive/2.42.3/graphviz-2.42.3.tar.gz
-            tar -xzf .graphviz/graphviz.tar.gz -C .graphviz
-            sudo cp .graphviz/graphviz-2.42.3/bin/dot /usr/bin/
+          if [ -d .graphviz-bin ]; then
+            echo "Restoring Graphviz from cache"
+            sudo cp .graphviz-bin/* /usr/bin/
           else
-            echo "Graphviz found in cache"
+            echo "Installing Graphviz via apt"
+            sudo apt-get update
+            sudo apt-get install -y graphviz
+
+            echo "Caching Graphviz binaries"
+            mkdir -p .graphviz-bin
+            sudo cp /usr/bin/dot* .graphviz-bin/ || true
+            sudo cp /usr/bin/neato* .graphviz-bin/ || true
+            sudo cp /usr/bin/twopi* .graphviz-bin/ || true
+            sudo cp /usr/bin/circo* .graphviz-bin/ || true
+            sudo cp /usr/bin/fdp* .graphviz-bin/ || true
+            sudo cp /usr/bin/sfdp* .graphviz-bin/ || true
           fi
+
           dot -V
 
       - name: Cache PlantUML JAR
