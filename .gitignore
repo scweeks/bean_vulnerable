@@ -226,6 +226,16 @@ fix_bean_vulnerable_circular_ref.sh
 *_backup/
 bean_vulnerable_backup/
 
+# Allow UML diagrams for backup modules
+!docs/UML/Activity/core/bean_vuln_cli_backup/
+!docs/UML/Activity/core/bean_vuln_cli_backup/**
+!docs/UML/Class/core/bean_vuln_cli_backup/
+!docs/UML/Class/core/bean_vuln_cli_backup/**
+!docs/UML/Package/core/bean_vuln_cli_backup/
+!docs/UML/Package/core/bean_vuln_cli_backup/**
+!docs/UML/Sequence/core/bean_vuln_cli_backup/
+!docs/UML/Sequence/core/bean_vuln_cli_backup/**
+
 ## Ensure PUML sources under docs/UML/Source are not ignored
 !docs/UML/Source/
 !docs/UML/Source/**/
