@@ -1,0 +1,25 @@
+@startuml GraphAttentionNetwork
+title GraphAttentionNetwork (from src/core/advanced_feature_engineering.py)
+skinparam classAttributeIconSize 0
+package core {
+  class GraphAttentionNetwork <<torch.nn.Module>> {
+    - input_dim
+    - hidden_dim
+    - num_heads
+    - num_layers
+    - dropout
+    - gat_layers
+    - attention_layers
+    - layer_norms
+    - dropout_layer
+    + __init__(input_dim, hidden_dim, num_heads, num_layers, dropout)
+    + forward(x, edge_index, batch)
+    + _forward_pyg(x, edge_index, batch)
+    + _forward_simplified(x, edge_index, batch)
+  }
+}
+note right of GraphAttentionNetwork
+Source: src/core/advanced_feature_engineering.py
+Includes PyTorch-Geometric and simplified attention paths.
+end note
+@enduml

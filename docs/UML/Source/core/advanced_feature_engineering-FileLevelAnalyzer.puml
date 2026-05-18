@@ -1,0 +1,14 @@
+@startuml FileLevelAnalyzer
+title FileLevelAnalyzer (from src/core/advanced_feature_engineering.py)
+skinparam classAttributeIconSize 0
+package core {
+  class FileLevelAnalyzer {
+    + analyze(file_code)
+    - _count_security_imports(code)
+  }
+}
+note right of FileLevelAnalyzer
+Source: src/core/advanced_feature_engineering.py
+Computes file-level metrics, class/method counts and basic security import checks.
+end note
+@enduml

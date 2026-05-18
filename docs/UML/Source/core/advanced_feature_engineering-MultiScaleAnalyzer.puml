@@ -1,0 +1,35 @@
+@startuml MultiScaleAnalyzer
+title MultiScaleAnalyzer (from src/core/advanced_feature_engineering.py)
+skinparam classAttributeIconSize 0
+package core {
+  class MultiScaleAnalyzer {
+    - config
+    - scales
+    - aggregation_method
+    - weight_scales
+    - function_analyzer
+    - file_analyzer
+    - project_analyzer
+    - scale_weights
+    + __init__(multiscale_config)
+    + analyze_multiscale(code_data)
+    + _combine_scales(scale_results, scale_features)
+    + _weighted_average_combination(scale_results, scale_features)
+    + _max_pooling_combination(scale_results, scale_features)
+    + _attention_combination(scale_results, scale_features)
+    + _simple_average_combination(scale_results, scale_features)
+  }
+  class FunctionLevelAnalyzer
+  class FileLevelAnalyzer
+  class ProjectLevelAnalyzer
+}
+
+MultiScaleAnalyzer --> FunctionLevelAnalyzer : uses
+MultiScaleAnalyzer --> FileLevelAnalyzer : uses
+MultiScaleAnalyzer --> ProjectLevelAnalyzer : uses
+
+note right of MultiScaleAnalyzer
+Source: src/core/advanced_feature_engineering.py
+Coordinates function/file/project scale analyzers and combines results.
+end note
+@enduml

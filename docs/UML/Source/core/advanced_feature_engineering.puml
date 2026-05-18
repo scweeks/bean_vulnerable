@@ -1,0 +1,98 @@
+@startuml advanced_feature_engineering
+title advanced_feature_engineering (from src/core/advanced_feature_engineering.py)
+skinparam classAttributeIconSize 0
+
+package core {
+  class GraphAttentionNetwork <<torch.nn.Module>> {
+    - input_dim
+    - hidden_dim
+    - num_heads
+    - num_layers
+    - dropout
+    - gat_layers
+    - attention_layers
+    - layer_norms
+    - dropout_layer
+    + __init__(input_dim, hidden_dim, num_heads, num_layers, dropout)
+    + forward(x, edge_index, batch)
+    + _forward_pyg(x, edge_index, batch)
+    + _forward_simplified(x, edge_index, batch)
+  }
+
+  class TemporalGraphNetwork <<torch.nn.Module>> {
+    - node_dim
+    - edge_dim
+    - hidden_dim
+    - num_layers
+    - node_rnn
+    - edge_rnn
+    - temporal_attention
+    - fusion
+    + __init__(node_dim, edge_dim, hidden_dim, num_layers)
+    + forward(node_sequences, edge_sequences, timestamps)
+  }
+
+  class MultiScaleAnalyzer {
+    - config
+    - scales
+    - aggregation_method
+    - weight_scales
+    - function_analyzer
+    - file_analyzer
+    - project_analyzer
+    - scale_weights
+    + __init__(multiscale_config)
+    + analyze_multiscale(code_data)
+    + _combine_scales(scale_results, scale_features)
+    + _weighted_average_combination(scale_results, scale_features)
+    + _max_pooling_combination(scale_results, scale_features)
+    + _attention_combination(scale_results, scale_features)
+    + _simple_average_combination(scale_results, scale_features)
+  }
+
+  class FunctionLevelAnalyzer {
+    + analyze(function_code)
+    - _calculate_cyclomatic_complexity(code)
+    - _calculate_nesting_depth(code)
+    - _count_sql_patterns(code)
+    - _count_input_patterns(code)
+    - _count_output_patterns(code)
+  }
+
+  class FileLevelAnalyzer {
+    + analyze(file_code)
+    - _count_security_imports(code)
+  }
+
+  class ProjectLevelAnalyzer {
+    + analyze(project_context)
+    - _count_security_dependencies(dependencies)
+  }
+
+  class AdvancedFeatureEngineer {
+    - config
+    - gat
+    - temporal_gnn
+    - multiscale_analyzer
+    + __init__(feature_config)
+    + engineer_features(code_data)
+    + _extract_gat_features(graph_data)
+    + _extract_temporal_features(temporal_data)
+    + _combine_advanced_features(advanced_features)
+    + get_feature_statistics()
+  }
+}
+
+' Relationships
+AdvancedFeatureEngineer --> GraphAttentionNetwork : has a
+AdvancedFeatureEngineer --> TemporalGraphNetwork : has a
+AdvancedFeatureEngineer --> MultiScaleAnalyzer : has a
+MultiScaleAnalyzer --> FunctionLevelAnalyzer : uses
+MultiScaleAnalyzer --> FileLevelAnalyzer : uses
+MultiScaleAnalyzer --> ProjectLevelAnalyzer : uses
+
+note right of AdvancedFeatureEngineer
+Source: src/core/advanced_feature_engineering.py
+Complete class-level documentation for this module. Includes attributes, methods, visibilities, and relationships.
+end note
+@enduml

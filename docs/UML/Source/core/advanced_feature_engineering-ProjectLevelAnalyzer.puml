@@ -1,0 +1,14 @@
+@startuml ProjectLevelAnalyzer
+title ProjectLevelAnalyzer (from src/core/advanced_feature_engineering.py)
+skinparam classAttributeIconSize 0
+package core {
+  class ProjectLevelAnalyzer {
+    + analyze(project_context)
+    - _count_security_dependencies(dependencies)
+  }
+}
+note right of ProjectLevelAnalyzer
+Source: src/core/advanced_feature_engineering.py
+Analyzes project-level metrics and dependency security signals.
+end note
+@enduml
