@@ -2,8 +2,8 @@
 numpy<2
 pandas>=2.0
 PyYAML>=6.0
-dgl==2.1.0
+dgl==2.2.1
 pydantic>=1.10,<2
 requests>=2.31
-transformers==4.37.2
+transformers==5.10.1
 safetensors
